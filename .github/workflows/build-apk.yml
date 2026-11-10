@@ -15,8 +15,10 @@ jobs:
 
     - name: Unzip Project
       run: |
-        unzip -q "*.zip" -d project
-        cp -r project/* . || true
+        unzip -q "*.zip" -d extracted_project
+        # لو المشروع جوه مجلد رئيسي جوه الـ ZIP، هننقله للـ root مباشرة
+        find extracted_project -mindepth 2 -maxdepth 2 -exec mv {} . \; || true
+        cp -r extracted_project/* . || true
 
     - name: Set up Java JDK
       uses: actions/setup-java@v4
