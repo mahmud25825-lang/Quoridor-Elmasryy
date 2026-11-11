@@ -16,9 +16,9 @@ jobs:
     - name: Unzip Project
       run: |
         unzip -q "*.zip" -d extracted_project
-        # لو المشروع جوه مجلد رئيسي جوه الـ ZIP، هننقله للـ root مباشرة
-        find extracted_project -mindepth 2 -maxdepth 2 -exec mv {} . \; || true
-        cp -r extracted_project/* . || true
+        # دوّر على مكان settings.gradle.kts وحدد مجلد المشروع
+        PROJECT_DIR=$(dirname "$(find extracted_project -name 'settings.gradle*' | head -n 1)")
+        echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
     - name: Set up Java JDK
       uses: actions/setup-java@v4
@@ -29,16 +29,19 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       with:
-        cmdline-tools-version: "11076708"
-        packages: "platforms;android-34"
+        packages: "platforms;android-35 build-tools;35.0.0"
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: "8.9"
 
     - name: Build APK with Gradle
-      run: |
-        chmod +x gradlew
-        ./gradlew assembleDebug
+      working-directory: ${{ env.PROJECT_DIR }}
+      run: gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Quoridor-APK
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
